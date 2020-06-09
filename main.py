@@ -19,18 +19,17 @@ greenbrown = (82/255,95/255,47/255)
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from cycler import cycler
 
 from plotter_data import plotter
+from GUI_graphe import runAppGui
 
-plotter("../data/Liste_arrets_v2.xlsx")
-plt.show()
-
-"""
+color_cycler = cycler(color=[orange_intense,blue,green,brown,greensea,orange,purple,greenbrown,yellow,cyan,brown_dark])
+plt.rc('axes', prop_cycle=color_cycler)
 
 
-def onclick(event):
-    print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
-            ('double' if event.dblclick else 'single', event.button,
-            event.x, event.y, event.xdata, event.ydata))
 
-cid = fig.canvas.mpl_connect('button_press_event', onclick)"""
+
+figure_plotter = plotter("../data/Liste_arrets_v2.xlsx")
+runAppGui(figure_plotter)
+

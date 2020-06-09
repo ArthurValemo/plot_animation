@@ -27,16 +27,18 @@ class plotter :
 
         xlsx = pd.ExcelFile(file_name)
         self.__data_frame = pd.read_excel(xlsx,'Sheet1')
-        self.initialise_donnees('CODE_F0')
+        filtre = np.ones(len(self.__data_frame),dtype=bool)
+        self.initialise_donnees('CODE_F0',filtre)
         self.ordonner_donnees()
         self.initialise_figure()
+        self.__selection = ''
 
 
-    def initialise_donnees(self,group_key) : 
+    def initialise_donnees(self,group_key,filtre) : 
         list_group = [group_key,'DUREE_ARRET','ID','PERTES_ENERGIE_GLOBALES']
         agg_famille_dict = {"DUREE_ARRET":sum,"ID":len,"PERTES_ENERGIE_GLOBALES":sum}
         self.__group_key = group_key
-        self.__group = self.__data_frame[list_group].groupby(group_key).agg(agg_famille_dict)
+        self.__group = self.__data_frame[filtre][list_group].groupby(group_key).agg(agg_famille_dict)
         
 
 
@@ -56,10 +58,86 @@ class plotter :
     
     def initialise_figure(self) : 
 
-        self.__fig = plt.figure()
+        self.__fig = plt.figure(figsize=(8,5))
         self.__ax = self.__fig.add_subplot(111)
-        self.__ax.pie(self.__data_array,labels=self.__list_index,autopct='%1.1f%%',startangle=90)
+        self.__wedges,texts,autotexts = self.__ax.pie(self.__data_array,autopct='%1.1f%%',startangle=90,textprops=dict(color="w"))
         self.__ax.set_title("Répartion : <"+self.__data_label+"> par <"+self.__group_key+">")
         self.__ax.grid(True)
         self.__ax.axis('equal')
+        self.__ax.legend(self.__wedges, self.__list_index,
+                        title=self.__group_key,
+                        loc="center left",
+                        bbox_to_anchor=(1, 0, 0.5, 1))
         self.__fig.tight_layout()
+
+    def rafraichir_figure(self) :
+
+        self.__fig.clf()
+        self.__ax = self.__fig.add_subplot(111)
+        self.__wedges,texts,autotexts = self.__ax.pie(self.__data_array,autopct='%1.1f%%',startangle=90,textprops=dict(color="w"))
+        self.__ax.set_title("Répartion : <"+self.__data_label+"> par <"+self.__group_key+">")
+        self.__ax.grid(True)
+        self.__ax.axis('equal')
+        self.__ax.legend(self.__wedges, self.__list_index,
+                        title=self.__group_key,
+                        loc="center left",
+                        bbox_to_anchor=(1, 0, 0.5, 1))
+        self.__fig.tight_layout()
+
+
+
+
+
+    def click_figure(self,event) : 
+
+        xclick, yclick = event.xdata, event.ydata 
+        selection_mask = self.__find_selection(xclick,yclick)
+        selection = self.__list_index[selection_mask]
+        if len(selection)>0 :
+            self.__selection =  selection[0]
+        else : 
+            self.__selection = ''
+
+
+    @property
+    def figure(self) : 
+        return self.__fig
+
+    @property
+    def selection(self) : 
+        return self.__selection
+
+    def __find_selection(self,xclick,yclick) :
+        selection_mask = []
+        for wedge in self.__wedges : 
+            selection_mask.append(wedge.get_path().contains_point([xclick,yclick]))
+        return selection_mask
+
+    def detail_selection(self) : 
+        detail_flag = True
+        if self.__group_key == 'CODE_F0' : 
+            group_key = 'CODE_F1' 
+        elif self.__group_key == 'CODE_F1' : 
+            group_key = 'FAMILLE_STATUS' 
+        else : detail_flag = False
+
+        print(self.__group_key)
+        if self.__selection != '' and detail_flag : 
+
+            filtre = self.__data_frame[self.__group_key]==self.__selection
+            self.initialise_donnees(group_key,filtre)
+            self.ordonner_donnees(self.__data_name)
+            self.rafraichir_figure()
+            
+
+    def clear_figure(self) : 
+        filtre = np.ones(len(self.__data_frame),dtype=bool)
+        self.initialise_donnees('CODE_F0',filtre)
+        self.ordonner_donnees(self.__data_name)
+        self.rafraichir_figure()
+
+    def change_data_name(self,data_name) : 
+
+            self.ordonner_donnees(data_name)
+            self.rafraichir_figure()
+
