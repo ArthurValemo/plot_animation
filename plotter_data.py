@@ -19,6 +19,10 @@ greenbrown = (82/255,95/255,47/255)
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from cycler import cycler
+
+color_cycler = cycler(color=[orange_intense,blue,green,brown,greensea,orange,purple,greenbrown,yellow,cyan,brown_dark])
+plt.rc('axes', prop_cycle=color_cycler)
 
 
 class plotter : 
